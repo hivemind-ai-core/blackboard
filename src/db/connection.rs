@@ -1,4 +1,4 @@
-use crate::core::errors::BBResult;
+use crate::core::errors::{BBError, BBResult};
 use rusqlite::Connection;
 use std::path::Path;
 
@@ -6,7 +6,12 @@ pub fn with_connection<F, T>(project_dir: &Path, f: F) -> BBResult<T>
 where
     F: FnOnce(&mut Connection) -> BBResult<T>,
 {
-    let db_path = project_dir.join(".bb").join("blackboard.db");
+    let bb_dir = project_dir.join(".bb");
+    if !bb_dir.exists() {
+        return Err(BBError::NotInitialized);
+    }
+    
+    let db_path = bb_dir.join("blackboard.db");
     let mut conn = Connection::open(&db_path)?;
 
     conn.execute_batch(

@@ -9,6 +9,7 @@ use crate::db::connection::with_connection;
 use crate::util::ref_::parse_ref;
 use std::path::Path;
 
+#[allow(clippy::too_many_arguments)]
 pub fn log(
     project_dir: &Path,
     since: Option<&str>,

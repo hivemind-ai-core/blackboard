@@ -92,7 +92,7 @@ pub fn list_artifacts(
 
     let mut stmt = conn.prepare(&sql)?;
     let artifacts = stmt
-        .query_map(&param_refs[..], |row| row_to_artifact(row))?
+        .query_map(&param_refs[..], row_to_artifact)?
         .collect::<Result<Vec<_>, _>>()?;
 
     Ok(artifacts)
@@ -124,7 +124,7 @@ pub fn find_artifacts_by_ref(
     )?;
 
     let artifacts = stmt
-        .query_map(params![where_, what, ref_param], |row| row_to_artifact(row))?
+        .query_map(params![where_, what, ref_param], row_to_artifact)?
         .collect::<Result<Vec<_>, _>>()?;
 
     Ok(artifacts)

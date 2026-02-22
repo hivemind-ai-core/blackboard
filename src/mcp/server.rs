@@ -27,7 +27,7 @@ impl BlackboardMcpServer {
         match method {
             "bb_identify" => {
                 let input: IdentifyInput = params
-                    .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {}", e))))
+                    .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {e}"))))
                     .transpose()?
                     .ok_or_else(|| BBError::InvalidInput("Missing params".to_string()))?;
                 
@@ -37,7 +37,7 @@ impl BlackboardMcpServer {
 
             "bb_set_status" => {
                 let input: SetStatusInput = params
-                    .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {}", e))))
+                    .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {e}"))))
                     .transpose()?
                     .ok_or_else(|| BBError::InvalidInput("Missing params".to_string()))?;
                 
@@ -56,7 +56,7 @@ impl BlackboardMcpServer {
 
             "bb_post_message" => {
                 let input: PostMessageInput = params
-                    .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {}", e))))
+                    .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {e}"))))
                     .transpose()?
                     .ok_or_else(|| BBError::InvalidInput("Missing params".to_string()))?;
                 
@@ -75,7 +75,7 @@ impl BlackboardMcpServer {
 
             "bb_register_artifact" => {
                 let input: RegisterArtifactInput = params
-                    .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {}", e))))
+                    .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {e}"))))
                     .transpose()?
                     .ok_or_else(|| BBError::InvalidInput("Missing params".to_string()))?;
                 
@@ -94,7 +94,7 @@ impl BlackboardMcpServer {
 
             "bb_find_refs" => {
                 let input: FindRefsInput = params
-                    .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {}", e))))
+                    .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {e}"))))
                     .transpose()?
                     .ok_or_else(|| BBError::InvalidInput("Missing params".to_string()))?;
                 
@@ -107,7 +107,7 @@ impl BlackboardMcpServer {
                     .map(|r| serde_json::to_value(r).unwrap())
             }
 
-            _ => Err(BBError::InvalidInput(format!("Unknown method: {}", method))),
+            _ => Err(BBError::InvalidInput(format!("Unknown method: {method}"))),
         }
     }
 }
@@ -119,8 +119,8 @@ pub async fn run_mcp_server(
 ) -> crate::core::errors::BBResult<()> {
     use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
     
-    // Check if initialized
-    crate::db::schema::ensure_initialized(project_dir)?;
+    // Check if initialized - we'll handle NotInitialized errors as JSON-RPC responses
+    let initialized = crate::util::discovery::is_initialized(project_dir);
 
     let identity = IdentityResolver::new(fixed_agent.clone(), env_agent.clone());
     let server = Arc::new(BlackboardMcpServer::new(identity, project_dir));
@@ -159,7 +159,7 @@ pub async fn run_mcp_server(
                     },
                     "id": null
                 });
-                let _ = stdout.write_all(format!("{}\n", response).as_bytes()).await;
+                let _ = stdout.write_all(format!("{response}\n").as_bytes()).await;
                 let _ = stdout.flush().await;
                 continue;
             }
@@ -185,7 +185,7 @@ pub async fn run_mcp_server(
                 },
                 "id": id
             });
-            let _ = stdout.write_all(format!("{}\n", response).as_bytes()).await;
+            let _ = stdout.write_all(format!("{response}\n").as_bytes()).await;
             let _ = stdout.flush().await;
             continue;
         }
@@ -209,13 +209,28 @@ pub async fn run_mcp_server(
                 },
                 "id": id
             });
-            let _ = stdout.write_all(format!("{}\n", response).as_bytes()).await;
+            let _ = stdout.write_all(format!("{response}\n").as_bytes()).await;
             let _ = stdout.flush().await;
             continue;
         }
         
         // Handle tool calls
         if method == "tools/call" {
+            // Check initialization first
+            if !initialized {
+                let response = json!({
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32001,
+                        "message": "No blackboard found. Run 'bb init' to create one."
+                    },
+                    "id": id
+                });
+                let _ = stdout.write_all(format!("{response}\n").as_bytes()).await;
+                let _ = stdout.flush().await;
+                continue;
+            }
+            
             let tool_name = params.as_ref()
                 .and_then(|p| p.get("name"))
                 .and_then(|n| n.as_str())
@@ -245,7 +260,9 @@ pub async fn run_mcp_server(
                         BBError::InvalidRefFormat(msg) => (-32005, msg),
                         BBError::PathTraversal(msg) => (-32006, msg),
                         BBError::DatabaseBusy => (-32007, "Database busy. Please retry.".to_string()),
-                        _ => (-32000, e.to_string()),
+                        BBError::IoError(_) => (-32008, "An I/O error occurred. Please check file permissions and disk space.".to_string()),
+                        BBError::SqliteError(_) => (-32009, "A database error occurred. Please try again or contact support.".to_string()),
+                        BBError::JsonError(_) => (-32010, "A data serialization error occurred. Please check your input format.".to_string()),
                     };
                     json!({
                         "jsonrpc": "2.0",
@@ -258,7 +275,7 @@ pub async fn run_mcp_server(
                 }
             };
             
-            let _ = stdout.write_all(format!("{}\n", response).as_bytes()).await;
+            let _ = stdout.write_all(format!("{response}\n").as_bytes()).await;
             let _ = stdout.flush().await;
             continue;
         }
@@ -272,43 +289,11 @@ pub async fn run_mcp_server(
             },
             "id": id
         });
-        let _ = stdout.write_all(format!("{}\n", response).as_bytes()).await;
+        let _ = stdout.write_all(format!("{response}\n").as_bytes()).await;
         let _ = stdout.flush().await;
     }
     
     Ok(())
 }
 
-// Default implementations for GetStatusInput and ReadMessagesInput
-impl Default for GetStatusInput {
-    fn default() -> Self {
-        Self { agent_id: None }
-    }
-}
 
-impl Default for ReadMessagesInput {
-    fn default() -> Self {
-        Self {
-            since: None,
-            tags: None,
-            from_agent: None,
-            priority: None,
-            ref_where: None,
-            ref_what: None,
-            ref_ref: None,
-            limit: None,
-        }
-    }
-}
-
-impl Default for ListArtifactsInput {
-    fn default() -> Self {
-        Self {
-            produced_by: None,
-            ref_where: None,
-            ref_what: None,
-            ref_ref: None,
-            limit: None,
-        }
-    }
-}

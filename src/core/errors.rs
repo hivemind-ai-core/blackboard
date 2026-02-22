@@ -1,8 +1,10 @@
 #[derive(Debug, thiserror::Error)]
 pub enum BBError {
+    #[allow(dead_code)]
     #[error("No blackboard found. Run 'bb init' to create one.")]
     NotInitialized,
 
+    #[allow(dead_code)]
     #[error("Database busy. Please retry.")]
     DatabaseBusy,
 

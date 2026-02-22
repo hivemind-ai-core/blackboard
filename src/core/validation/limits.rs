@@ -20,8 +20,7 @@ pub fn validate_agent_id(id: &str) -> BBResult<()> {
     }
     if id.len() > MAX_AGENT_ID_LEN {
         return Err(BBError::InvalidInput(format!(
-            "agent ID too long (max {} chars)",
-            MAX_AGENT_ID_LEN
+            "agent ID too long (max {MAX_AGENT_ID_LEN} chars)"
         )));
     }
     // Check for control characters
@@ -36,8 +35,7 @@ pub fn validate_agent_id(id: &str) -> BBResult<()> {
 pub fn validate_task(task: &str) -> BBResult<()> {
     if task.len() > MAX_TASK_LEN {
         return Err(BBError::InvalidInput(format!(
-            "task too long (max {} chars)",
-            MAX_TASK_LEN
+            "task too long (max {MAX_TASK_LEN} chars)"
         )));
     }
     Ok(())
@@ -46,8 +44,7 @@ pub fn validate_task(task: &str) -> BBResult<()> {
 pub fn validate_blockers(blockers: &str) -> BBResult<()> {
     if blockers.len() > MAX_BLOCKERS_LEN {
         return Err(BBError::InvalidInput(format!(
-            "blockers too long (max {} chars)",
-            MAX_BLOCKERS_LEN
+            "blockers too long (max {MAX_BLOCKERS_LEN} chars)"
         )));
     }
     Ok(())
@@ -61,8 +58,7 @@ pub fn validate_message_content(content: &str) -> BBResult<()> {
     }
     if content.len() > MAX_MESSAGE_CONTENT_LEN {
         return Err(BBError::InvalidInput(format!(
-            "message content too long (max {} chars)",
-            MAX_MESSAGE_CONTENT_LEN
+            "message content too long (max {MAX_MESSAGE_CONTENT_LEN} chars)"
         )));
     }
     Ok(())
@@ -76,8 +72,7 @@ pub fn validate_artifact_path(path: &str, project_root: &Path) -> BBResult<PathB
     }
     if path.len() > MAX_ARTIFACT_PATH_LEN {
         return Err(BBError::InvalidInput(format!(
-            "artifact path too long (max {} chars)",
-            MAX_ARTIFACT_PATH_LEN
+            "artifact path too long (max {MAX_ARTIFACT_PATH_LEN} chars)"
         )));
     }
 
@@ -99,7 +94,7 @@ pub fn validate_artifact_path(path: &str, project_root: &Path) -> BBResult<PathB
     let full_path = project_root.join(path);
     let canonical = full_path
         .canonicalize()
-        .map_err(|_| BBError::InvalidInput(format!("invalid path: {}", path)))?;
+        .map_err(|_| BBError::InvalidInput(format!("invalid path: {path}")))?;
 
     let project_canonical = project_root
         .canonicalize()
@@ -117,8 +112,7 @@ pub fn validate_artifact_path(path: &str, project_root: &Path) -> BBResult<PathB
 pub fn validate_artifact_description(desc: &str) -> BBResult<()> {
     if desc.len() > MAX_ARTIFACT_DESC_LEN {
         return Err(BBError::InvalidInput(format!(
-            "artifact description too long (max {} chars)",
-            MAX_ARTIFACT_DESC_LEN
+            "artifact description too long (max {MAX_ARTIFACT_DESC_LEN} chars)"
         )));
     }
     Ok(())
@@ -127,8 +121,7 @@ pub fn validate_artifact_description(desc: &str) -> BBResult<()> {
 pub fn validate_version(version: &str) -> BBResult<()> {
     if version.len() > MAX_VERSION_LEN {
         return Err(BBError::InvalidInput(format!(
-            "version too long (max {} chars)",
-            MAX_VERSION_LEN
+            "version too long (max {MAX_VERSION_LEN} chars)"
         )));
     }
     Ok(())
@@ -137,8 +130,7 @@ pub fn validate_version(version: &str) -> BBResult<()> {
 pub fn validate_tags(tags: &[String]) -> BBResult<()> {
     if tags.len() > MAX_TAGS_PER_MESSAGE {
         return Err(BBError::InvalidInput(format!(
-            "too many tags (max {})",
-            MAX_TAGS_PER_MESSAGE
+            "too many tags (max {MAX_TAGS_PER_MESSAGE})"
         )));
     }
 
@@ -148,14 +140,12 @@ pub fn validate_tags(tags: &[String]) -> BBResult<()> {
         }
         if tag.len() > MAX_TAG_LEN {
             return Err(BBError::InvalidInput(format!(
-                "tag too long (max {} chars): {}",
-                MAX_TAG_LEN, tag
+                "tag too long (max {MAX_TAG_LEN} chars): {tag}"
             )));
         }
         if tag.chars().any(|c| c.is_control() || c.is_whitespace()) {
             return Err(BBError::InvalidInput(format!(
-                "tag contains invalid characters: {}",
-                tag
+                "tag contains invalid characters: {tag}"
             )));
         }
     }
@@ -254,7 +244,7 @@ mod tests {
     #[test]
     fn test_validate_tags_too_many() {
         let tags: Vec<String> = (0..MAX_TAGS_PER_MESSAGE + 1)
-            .map(|i| format!("tag{}", i))
+            .map(|i| format!("tag{i}"))
             .collect();
         assert!(validate_tags(&tags).is_err());
     }

@@ -38,7 +38,7 @@ pub struct SetStatusInput {
     pub blockers: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 pub struct GetStatusInput {
     pub agent_id: Option<String>,
 }
@@ -67,7 +67,7 @@ pub struct RefInput {
     pub ref_: JsonValue,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 pub struct ReadMessagesInput {
     pub since: Option<String>,
     pub tags: Option<Vec<String>>,
@@ -87,7 +87,7 @@ pub struct RegisterArtifactInput {
     pub refs: Option<Vec<RefInput>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 pub struct ListArtifactsInput {
     pub produced_by: Option<String>,
     pub ref_where: Option<String>,
@@ -135,7 +135,7 @@ pub async fn bb_set_status(
     let agent_id = resolver.require_identity()?.to_string();
     drop(resolver);
 
-    let status = input.status.map(|s| AgentStatus::from_str(&s));
+    let status = input.status.map(|s| AgentStatus::parse(&s));
 
     let agent = tokio::task::spawn_blocking({
         let project_dir = project_dir.to_path_buf();
@@ -151,7 +151,7 @@ pub async fn bb_set_status(
                 )
             })
         }
-    }).await.map_err(|e| BBError::InvalidInput(format!("Task join error: {}", e)))??;
+    }).await.map_err(|e| BBError::InvalidInput(format!("Task join error: {e}")))??;
 
     Ok(agent)
 }
@@ -183,13 +183,13 @@ pub async fn bb_get_status(
                 if let Some(agent_id) = &input.agent_id {
                     validate_agent_id(agent_id)?;
                     let agent = agent_ops::get_agent(conn, agent_id)?
-                        .ok_or_else(|| BBError::NotFound(format!("agent '{}' not found", agent_id)))?;
+                        .ok_or_else(|| BBError::NotFound(format!("agent '{agent_id}' not found")))?;
                     
                     let liveness = classify_liveness(agent.last_seen);
                     let minutes = chrono::Utc::now().signed_duration_since(agent.last_seen).num_minutes();
                     
                     Ok(vec![AgentWithLiveness {
-                        liveness: format!("{:?}", liveness).to_lowercase(),
+                        liveness: format!("{liveness:?}").to_lowercase(),
                         minutes_since_last_seen: minutes,
                         agent,
                     }])
@@ -201,7 +201,7 @@ pub async fn bb_get_status(
                         let liveness = classify_liveness(a.last_seen);
                         let minutes = now.signed_duration_since(a.last_seen).num_minutes();
                         AgentWithLiveness {
-                            liveness: format!("{:?}", liveness).to_lowercase(),
+                            liveness: format!("{liveness:?}").to_lowercase(),
                             minutes_since_last_seen: minutes,
                             agent: a,
                         }
@@ -209,7 +209,7 @@ pub async fn bb_get_status(
                 }
             })
         }
-    }).await.map_err(|e| BBError::InvalidInput(format!("Task join error: {}", e)))??;
+    }).await.map_err(|e| BBError::InvalidInput(format!("Task join error: {e}")))??;
 
     Ok(result)
 }
@@ -224,7 +224,7 @@ pub async fn bb_post_message(
     drop(resolver);
 
     let priority = input.priority
-        .map(|p| Priority::from_str(&p))
+        .map(|p| Priority::parse(&p))
         .unwrap_or(Priority::Normal);
 
     let refs: Vec<Reference> = input.refs
@@ -252,7 +252,7 @@ pub async fn bb_post_message(
                 )
             })
         }
-    }).await.map_err(|e| BBError::InvalidInput(format!("Task join error: {}", e)))??;
+    }).await.map_err(|e| BBError::InvalidInput(format!("Task join error: {e}")))??;
 
     Ok(message)
 }
@@ -268,7 +268,7 @@ pub async fn bb_read_messages(
         None
     };
 
-    let priority = input.priority.map(|p| Priority::from_str(&p));
+    let priority = input.priority.map(|p| Priority::parse(&p));
     let tags = input.tags.unwrap_or_default();
     let limit = input.limit.unwrap_or(20);
 
@@ -289,7 +289,7 @@ pub async fn bb_read_messages(
                 )
             })
         }
-    }).await.map_err(|e| BBError::InvalidInput(format!("Task join error: {}", e)))??;
+    }).await.map_err(|e| BBError::InvalidInput(format!("Task join error: {e}")))??;
 
     Ok(messages)
 }
@@ -326,7 +326,7 @@ pub async fn bb_register_artifact(
                 )
             })
         }
-    }).await.map_err(|e| BBError::InvalidInput(format!("Task join error: {}", e)))??;
+    }).await.map_err(|e| BBError::InvalidInput(format!("Task join error: {e}")))??;
 
     Ok(artifact)
 }
@@ -351,7 +351,7 @@ pub async fn bb_list_artifacts(
                 )
             })
         }
-    }).await.map_err(|e| BBError::InvalidInput(format!("Task join error: {}", e)))??;
+    }).await.map_err(|e| BBError::InvalidInput(format!("Task join error: {e}")))??;
 
     Ok(artifacts)
 }
@@ -374,7 +374,7 @@ pub async fn bb_find_refs(
                 find_references(conn, &input.where_, &input.what, &ref_value)
             })
         }
-    }).await.map_err(|e| BBError::InvalidInput(format!("Task join error: {}", e)))??;
+    }).await.map_err(|e| BBError::InvalidInput(format!("Task join error: {e}")))??;
 
     Ok(results)
 }
@@ -394,7 +394,7 @@ pub async fn bb_summary(
                         let liveness = classify_liveness(a.last_seen);
                         let minutes = now.signed_duration_since(a.last_seen).num_minutes();
                         AgentWithLiveness {
-                            liveness: format!("{:?}", liveness).to_lowercase(),
+                            liveness: format!("{liveness:?}").to_lowercase(),
                             minutes_since_last_seen: minutes,
                             agent: a,
                         }
@@ -430,7 +430,7 @@ pub async fn bb_summary(
                 })
             })
         }
-    }).await.map_err(|e| BBError::InvalidInput(format!("Task join error: {}", e)))??;
+    }).await.map_err(|e| BBError::InvalidInput(format!("Task join error: {e}")))??;
 
     Ok(result)
 }

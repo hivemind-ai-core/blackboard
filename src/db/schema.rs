@@ -8,6 +8,7 @@ pub fn init_schema(conn: &Connection) -> BBResult<()> {
     run_migrations(conn)
 }
 
+#[allow(dead_code)]
 pub fn ensure_initialized(project_dir: &Path) -> BBResult<()> {
     if !is_initialized(project_dir) {
         return Err(BBError::NotInitialized);

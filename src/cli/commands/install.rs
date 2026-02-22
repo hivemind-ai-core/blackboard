@@ -9,7 +9,7 @@ pub fn run(agent_type: Option<&str>) -> BBResult<()> {
     println!("Blackboard MCP Installation");
     println!("==========================\n");
     
-    println!("bb binary location: {}\n", exe_path_str);
+    println!("bb binary location: {exe_path_str}\n");
 
     // Determine agent type
     let agent_types: Vec<&str> = match agent_type {
@@ -41,39 +41,39 @@ fn print_claude_config(exe_path: &str) {
     println!("Claude Code Configuration");
     println!("-------------------------");
     println!("Option A (CLI with env):");
-    println!("  claude mcp add --transport stdio --env BB_AGENT_ID=claude-01 blackboard -- {} mcp", exe_path);
+    println!("  claude mcp add --transport stdio --env BB_AGENT_ID=claude-01 blackboard -- {exe_path} mcp");
     println!();
     println!("Option B (CLI with args):");
-    println!("  claude mcp add --transport stdio blackboard -- {} mcp --agent claude-01", exe_path);
+    println!("  claude mcp add --transport stdio blackboard -- {exe_path} mcp --agent claude-01");
     println!();
     println!("Option C (.mcp.json in project root):");
     println!(r#"  {{
     "mcpServers": {{
       "blackboard": {{
-        "command": "{}",
+        "command": "{exe_path}",
         "args": ["mcp", "--agent", "claude-01"],
         "env": {{}}
       }}
     }}
-  }}"#, exe_path);
+  }}"#);
 }
 
 fn print_kimi_config(exe_path: &str) {
     println!("Kimi Code Configuration");
     println!("-----------------------");
     println!("CLI:");
-    println!("  kimi mcp add --transport stdio blackboard -- {} mcp --agent kimi-01", exe_path);
+    println!("  kimi mcp add --transport stdio blackboard -- {exe_path} mcp --agent kimi-01");
     println!();
     println!("Config (~/.kimi/mcp.json):");
     println!(r#"  {{
     "mcpServers": {{
       "blackboard": {{
-        "command": "{}",
+        "command": "{exe_path}",
         "args": ["mcp", "--agent", "kimi-01"],
         "env": {{}}
       }}
     }}
-  }}"#, exe_path);
+  }}"#);
 }
 
 fn print_kilo_config(exe_path: &str) {
@@ -83,7 +83,7 @@ fn print_kilo_config(exe_path: &str) {
     println!(r#"  {{
     "mcpServers": {{
       "blackboard": {{
-        "command": "{}",
+        "command": "{exe_path}",
         "args": ["mcp", "--agent", "kilo-01"],
         "env": {{}},
         "alwaysAllow": [
@@ -99,16 +99,16 @@ fn print_kilo_config(exe_path: &str) {
         ]
       }}
     }}
-  }}"#, exe_path);
+  }}"#);
     println!();
     println!("Global config (~/.kilocode/cli/global/settings/mcp_settings.json):");
     println!(r#"  {{
     "mcpServers": {{
       "blackboard": {{
-        "command": "{}",
+        "command": "{exe_path}",
         "args": ["mcp", "--agent", "kilo-01"],
         "env": {{}}
       }}
     }}
-  }}"#, exe_path);
+  }}"#);
 }

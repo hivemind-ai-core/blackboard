@@ -26,8 +26,7 @@ pub fn register_artifact(
     
     if refs.len() > MAX_REFS_PER_ENTITY {
         return Err(BBError::InvalidInput(format!(
-            "too many refs (max {})",
-            MAX_REFS_PER_ENTITY
+            "too many refs (max {MAX_REFS_PER_ENTITY})"
         )));
     }
     
@@ -45,7 +44,7 @@ pub fn register_artifact(
     
     // Return the artifact (get it to get the ID)
     artifact_queries::get_artifact_by_path(conn, path)?
-        .ok_or_else(|| BBError::NotFound(format!("artifact {} not found after upsert", path)))
+        .ok_or_else(|| BBError::NotFound(format!("artifact {path} not found after upsert")))
 }
 
 pub fn get_artifact(conn: &mut Connection, path: &str) -> BBResult<Option<Artifact>> {

@@ -34,7 +34,7 @@ pub fn export(project_dir: &Path) -> BBResult<()> {
     };
 
     let json = serde_json::to_string_pretty(&data)?;
-    println!("{}", json);
+    println!("{json}");
 
     Ok(())
 }

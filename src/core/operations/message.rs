@@ -21,15 +21,14 @@ pub fn post_message(
 
     if refs.len() > MAX_REFS_PER_ENTITY {
         return Err(BBError::InvalidInput(format!(
-            "too many refs (max {})",
-            MAX_REFS_PER_ENTITY
+            "too many refs (max {MAX_REFS_PER_ENTITY})"
         )));
     }
 
     // Verify in_reply_to exists if provided
     if let Some(reply_to) = in_reply_to {
         if message_queries::get_message(conn, reply_to)?.is_none() {
-            return Err(BBError::NotFound(format!("message {} not found", reply_to)));
+            return Err(BBError::NotFound(format!("message {reply_to} not found")));
         }
     }
 
@@ -65,10 +64,11 @@ pub fn get_message_thread(conn: &mut Connection, id: i64) -> BBResult<Vec<Messag
 
         Ok(messages)
     } else {
-        Err(BBError::NotFound(format!("message {} not found", id)))
+        Err(BBError::NotFound(format!("message {id} not found")))
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn list_messages(
     conn: &mut Connection,
     since: Option<DateTime<Utc>>,

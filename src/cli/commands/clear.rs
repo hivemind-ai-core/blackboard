@@ -114,7 +114,7 @@ pub fn clear(
 
         with_connection(project_dir, |conn| {
             let deleted = message_ops::delete_messages_before(conn, cutoff)?;
-            println!("Deleted {} messages", deleted);
+            println!("Deleted {deleted} messages");
             Ok(())
         })?;
     }
@@ -122,7 +122,7 @@ pub fn clear(
     if reset_offline {
         with_connection(project_dir, |conn| {
             let deleted = agent_ops::delete_offline_agents(conn)?;
-            println!("Deleted {} offline agents", deleted);
+            println!("Deleted {deleted} offline agents");
             Ok(())
         })?;
     }
@@ -130,7 +130,7 @@ pub fn clear(
     if artifacts {
         with_connection(project_dir, |conn| {
             let cleared = artifact_ops::clear_artifacts(conn)?;
-            println!("Cleared {} artifacts", cleared);
+            println!("Cleared {cleared} artifacts");
             Ok(())
         })?;
     }

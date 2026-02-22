@@ -41,6 +41,7 @@ pub fn get_message(conn: &mut Connection, id: i64) -> BBResult<Option<Message>> 
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn list_messages(
     conn: &mut Connection,
     since: Option<DateTime<Utc>>,
@@ -121,7 +122,7 @@ pub fn list_messages(
 
     let mut stmt = conn.prepare(&sql)?;
     let messages = stmt
-        .query_map(&param_refs[..], |row| row_to_message(row))?
+        .query_map(&param_refs[..], row_to_message)?
         .collect::<Result<Vec<_>, _>>()?;
 
     Ok(messages)
@@ -153,7 +154,7 @@ pub fn find_messages_by_ref(
     )?;
 
     let messages = stmt
-        .query_map(params![where_, what, ref_param], |row| row_to_message(row))?
+        .query_map(params![where_, what, ref_param], row_to_message)?
         .collect::<Result<Vec<_>, _>>()?;
 
     Ok(messages)
@@ -169,7 +170,7 @@ pub fn get_message_replies(conn: &mut Connection, message_id: i64) -> BBResult<V
     )?;
 
     let messages = stmt
-        .query_map(params![message_id], |row| row_to_message(row))?
+        .query_map(params![message_id], row_to_message)?
         .collect::<Result<Vec<_>, _>>()?;
 
     Ok(messages)
@@ -201,7 +202,7 @@ fn row_to_message(row: &rusqlite::Row) -> Result<Message, rusqlite::Error> {
         from_agent: row.get(1)?,
         content: row.get(2)?,
         tags,
-        priority: Priority::from_str(&row.get::<_, String>(4)?),
+        priority: Priority::parse(&row.get::<_, String>(4)?),
         in_reply_to: row.get(5)?,
         refs,
         created_at: DateTime::parse_from_rfc3339(&created_at_str)

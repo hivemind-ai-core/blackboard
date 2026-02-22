@@ -45,7 +45,7 @@ pub fn status_set(
             println!("  Progress: {}%", agent.progress);
         }
         if let Some(blocks) = &agent.blockers {
-            println!("  Blockers: {}", blocks);
+            println!("  Blockers: {blocks}");
         }
         
         Ok(())
@@ -56,7 +56,7 @@ pub fn status_get(project_dir: &Path, agent_id: &str, format: OutputFormat) -> B
     with_connection(project_dir, |conn| {
         let agent = agent_ops::get_agent(conn, agent_id)?
             .ok_or_else(|| crate::core::errors::BBError::NotFound(
-                format!("agent '{}' not found", agent_id)
+                format!("agent '{agent_id}' not found")
             ))?;
 
         let liveness = classify_liveness(agent.last_seen);

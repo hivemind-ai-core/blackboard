@@ -37,7 +37,7 @@ impl Priority {
         }
     }
 
-    pub fn from_str(s: &str) -> Self {
+    pub fn parse(s: &str) -> Self {
         match s.to_lowercase().as_str() {
             "low" => Self::Low,
             "normal" => Self::Normal,
@@ -91,16 +91,16 @@ mod tests {
 
     #[test]
     fn test_priority_from_str() {
-        assert_eq!(Priority::from_str("low"), Priority::Low);
-        assert_eq!(Priority::from_str("normal"), Priority::Normal);
-        assert_eq!(Priority::from_str("high"), Priority::High);
-        assert_eq!(Priority::from_str("critical"), Priority::Critical);
+        assert_eq!(Priority::parse("low"), Priority::Low);
+        assert_eq!(Priority::parse("normal"), Priority::Normal);
+        assert_eq!(Priority::parse("high"), Priority::High);
+        assert_eq!(Priority::parse("critical"), Priority::Critical);
     }
 
     #[test]
     fn test_priority_case_insensitive() {
-        assert_eq!(Priority::from_str("LOW"), Priority::Low);
-        assert_eq!(Priority::from_str("High"), Priority::High);
+        assert_eq!(Priority::parse("LOW"), Priority::Low);
+        assert_eq!(Priority::parse("High"), Priority::High);
     }
 
     #[test]

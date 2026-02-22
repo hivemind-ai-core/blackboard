@@ -52,7 +52,7 @@ impl AgentStatus {
         }
     }
 
-    pub fn from_str(s: &str) -> Self {
+    pub fn parse(s: &str) -> Self {
         match s.to_lowercase().as_str() {
             "idle" => Self::Idle,
             "planning" => Self::Planning,
@@ -101,24 +101,24 @@ mod tests {
 
     #[test]
     fn test_agent_status_from_str() {
-        assert_eq!(AgentStatus::from_str("idle"), AgentStatus::Idle);
-        assert_eq!(AgentStatus::from_str("planning"), AgentStatus::Planning);
-        assert_eq!(AgentStatus::from_str("coding"), AgentStatus::Coding);
-        assert_eq!(AgentStatus::from_str("testing"), AgentStatus::Testing);
-        assert_eq!(AgentStatus::from_str("reviewing"), AgentStatus::Reviewing);
-        assert_eq!(AgentStatus::from_str("blocked"), AgentStatus::Blocked);
-        assert_eq!(AgentStatus::from_str("offline"), AgentStatus::Offline);
+        assert_eq!(AgentStatus::parse("idle"), AgentStatus::Idle);
+        assert_eq!(AgentStatus::parse("planning"), AgentStatus::Planning);
+        assert_eq!(AgentStatus::parse("coding"), AgentStatus::Coding);
+        assert_eq!(AgentStatus::parse("testing"), AgentStatus::Testing);
+        assert_eq!(AgentStatus::parse("reviewing"), AgentStatus::Reviewing);
+        assert_eq!(AgentStatus::parse("blocked"), AgentStatus::Blocked);
+        assert_eq!(AgentStatus::parse("offline"), AgentStatus::Offline);
     }
 
     #[test]
     fn test_agent_status_case_insensitive() {
-        assert_eq!(AgentStatus::from_str("IDLE"), AgentStatus::Idle);
-        assert_eq!(AgentStatus::from_str("Coding"), AgentStatus::Coding);
+        assert_eq!(AgentStatus::parse("IDLE"), AgentStatus::Idle);
+        assert_eq!(AgentStatus::parse("Coding"), AgentStatus::Coding);
     }
 
     #[test]
     fn test_agent_status_default() {
-        assert_eq!(AgentStatus::from_str("unknown"), AgentStatus::Idle);
+        assert_eq!(AgentStatus::parse("unknown"), AgentStatus::Idle);
     }
 
     #[test]

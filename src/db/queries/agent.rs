@@ -49,7 +49,7 @@ pub fn get_all_agents(conn: &mut Connection) -> BBResult<Vec<Agent>> {
     )?;
 
     let agents = stmt
-        .query_map([], |row| row_to_agent(row))?
+        .query_map([], row_to_agent)?
         .collect::<Result<Vec<_>, _>>()?;
 
     Ok(agents)
@@ -79,7 +79,7 @@ fn row_to_agent(row: &rusqlite::Row) -> Result<Agent, rusqlite::Error> {
         id: row.get(0)?,
         current_task: row.get(1)?,
         progress: row.get(2)?,
-        status: AgentStatus::from_str(&row.get::<_, String>(3)?),
+        status: AgentStatus::parse(&row.get::<_, String>(3)?),
         blockers: row.get(4)?,
         last_seen: DateTime::parse_from_rfc3339(&last_seen_str)
             .map_err(|e| {

@@ -65,7 +65,7 @@ impl OutputFormatter {
             ));
 
             if let Some(blockers) = &agent.blockers {
-                lines.push(format!("  → Blockers: {}", blockers));
+                lines.push(format!("  → Blockers: {blockers}"));
             }
         }
 
@@ -136,7 +136,7 @@ impl OutputFormatter {
             // Format content with wrapping
             let content_lines = wrap_text(&msg.content, 80);
             for line in content_lines {
-                lines.push(format!("  {}", line));
+                lines.push(format!("  {line}"));
             }
 
             if !msg.refs.is_empty() {
@@ -194,7 +194,7 @@ impl OutputFormatter {
             ));
 
             if let Some(version) = &artifact.version {
-                lines.push(format!("  → Version: {}", version));
+                lines.push(format!("  → Version: {version}"));
             }
 
             if !artifact.refs.is_empty() {
@@ -224,7 +224,7 @@ impl OutputFormatter {
             let status_str = format!("{} ({}%)", agent.status.as_str(), agent.progress);
             lines.push(format!("  • {} - {}", agent.id, status_str));
             if let Some(blockers) = &agent.blockers {
-                lines.push(format!("    ⚠ Blocked: {}", blockers));
+                lines.push(format!("    ⚠ Blocked: {blockers}"));
             }
         }
         lines.push(String::new());
@@ -326,12 +326,11 @@ fn wrap_text(text: &str, width: usize) -> Vec<String> {
     let mut current_line = String::new();
 
     for word in text.split_whitespace() {
-        if current_line.len() + word.len() + 1 > width {
-            if !current_line.is_empty() {
+        if current_line.len() + word.len() + 1 > width
+            && !current_line.is_empty() {
                 lines.push(current_line);
                 current_line = String::new();
             }
-        }
         if !current_line.is_empty() {
             current_line.push(' ');
         }
