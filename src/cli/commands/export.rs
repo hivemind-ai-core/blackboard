@@ -1,10 +1,10 @@
-use chrono::Utc;
-use serde::Serialize;
 use crate::core::errors::BBResult;
 use crate::core::operations::agent as agent_ops;
-use crate::core::operations::message as message_ops;
 use crate::core::operations::artifact as artifact_ops;
+use crate::core::operations::message as message_ops;
 use crate::db::connection::with_connection;
+use chrono::Utc;
+use serde::Serialize;
 use std::path::Path;
 
 #[derive(Serialize)]
@@ -19,9 +19,10 @@ struct ExportData {
 pub fn export(project_dir: &Path) -> BBResult<()> {
     let (agents, messages, artifacts) = with_connection(project_dir, |conn| {
         let agents = agent_ops::get_all_agents_with_liveness(conn)?;
-        let messages = message_ops::list_messages(conn, None, &[], None, None, None, None, None, 10000)?;
+        let messages =
+            message_ops::list_messages(conn, None, &[], None, None, None, None, None, 10000)?;
         let artifacts = artifact_ops::list_artifacts(conn, None, None, None, None, 10000)?;
-        
+
         Ok((agents, messages, artifacts))
     })?;
 
@@ -42,16 +43,16 @@ pub fn export(project_dir: &Path) -> BBResult<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
     use crate::cli::commands::init;
     use crate::cli::commands::message;
     use crate::core::models::message::Priority;
+    use tempfile::TempDir;
 
     #[test]
     fn test_export() {
         let temp = TempDir::new().unwrap();
         init::run(temp.path()).unwrap();
-        
+
         message::post(
             temp.path(),
             "agent-1",
@@ -60,7 +61,8 @@ mod tests {
             Priority::Normal,
             None,
             vec![],
-        ).unwrap();
+        )
+        .unwrap();
 
         export(temp.path()).unwrap();
     }

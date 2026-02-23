@@ -1,12 +1,12 @@
-use chrono::Utc;
+use crate::cli::output::{OutputFormat, OutputFormatter};
 use crate::core::errors::BBResult;
 use crate::core::models::message::Priority;
-use crate::core::operations::message as message_ops;
 use crate::core::operations::agent as agent_ops;
+use crate::core::operations::message as message_ops;
 use crate::core::validation::duration::validate_duration;
-use crate::cli::output::{OutputFormatter, OutputFormat};
 use crate::db::connection::with_connection;
 use crate::util::ref_::parse_ref;
+use chrono::Utc;
 use std::path::Path;
 
 #[allow(clippy::too_many_arguments)]
@@ -36,13 +36,12 @@ pub fn log(
         }
 
         let messages = message_ops::list_messages(
-            conn, since_dt, &tags, from_agent, priority,
-            ref_where, ref_what, ref_ref, limit
+            conn, since_dt, &tags, from_agent, priority, ref_where, ref_what, ref_ref, limit,
         )?;
 
         let formatter = OutputFormatter::new(format);
         print!("{}", formatter.format_messages(&messages));
-        
+
         Ok(())
     })
 }
@@ -56,18 +55,22 @@ pub fn post(
     reply_to: Option<i64>,
     refs: Vec<String>,
 ) -> BBResult<()> {
-    let parsed_refs: Result<Vec<_>, _> = refs.iter()
-        .map(|r| parse_ref(r))
-        .collect();
+    let parsed_refs: Result<Vec<_>, _> = refs.iter().map(|r| parse_ref(r)).collect();
     let parsed_refs = parsed_refs?;
 
     with_connection(project_dir, |conn| {
         let message = message_ops::post_message(
-            conn, from_agent, content, tags, priority, reply_to, parsed_refs
+            conn,
+            from_agent,
+            content,
+            tags,
+            priority,
+            reply_to,
+            parsed_refs,
         )?;
 
         println!("Posted message #{} from {}", message.id, message.from_agent);
-        
+
         Ok(())
     })
 }
@@ -78,7 +81,7 @@ pub fn show_message(project_dir: &Path, id: i64, format: OutputFormat) -> BBResu
 
         let formatter = OutputFormatter::new(format);
         print!("{}", formatter.format_message_thread(&messages));
-        
+
         Ok(())
     })
 }
@@ -86,8 +89,8 @@ pub fn show_message(project_dir: &Path, id: i64, format: OutputFormat) -> BBResu
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::TempDir;
     use crate::cli::commands::init;
+    use tempfile::TempDir;
 
     fn setup() -> TempDir {
         let temp = TempDir::new().unwrap();
@@ -98,7 +101,7 @@ mod tests {
     #[test]
     fn test_post_and_log() {
         let temp = setup();
-        
+
         post(
             temp.path(),
             "test-agent",
@@ -107,15 +110,28 @@ mod tests {
             Priority::Normal,
             None,
             vec![],
-        ).unwrap();
+        )
+        .unwrap();
 
-        log(temp.path(), None, vec![], None, None, None, None, None, 10, OutputFormat::Human).unwrap();
+        log(
+            temp.path(),
+            None,
+            vec![],
+            None,
+            None,
+            None,
+            None,
+            None,
+            10,
+            OutputFormat::Human,
+        )
+        .unwrap();
     }
 
     #[test]
     fn test_post_with_ref() {
         let temp = setup();
-        
+
         post(
             temp.path(),
             "test-agent",
@@ -124,8 +140,21 @@ mod tests {
             Priority::Normal,
             None,
             vec!["tt:task:13".to_string()],
-        ).unwrap();
+        )
+        .unwrap();
 
-        log(temp.path(), None, vec![], None, None, Some("tt"), Some("task"), Some("13"), 10, OutputFormat::Human).unwrap();
+        log(
+            temp.path(),
+            None,
+            vec![],
+            None,
+            None,
+            Some("tt"),
+            Some("task"),
+            Some("13"),
+            10,
+            OutputFormat::Human,
+        )
+        .unwrap();
     }
 }

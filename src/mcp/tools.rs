@@ -56,7 +56,7 @@ pub struct PostMessageInput {
     pub content: String,
     pub tags: Option<Vec<String>>,
     pub priority: Option<String>,
-    pub in_reply_to: Option<i64>,
+    pub reply_to: Option<i64>,
     pub refs: Option<Vec<RefInput>>,
 }
 
@@ -89,7 +89,7 @@ pub struct RegisterArtifactInput {
 
 #[derive(Debug, Default, Deserialize)]
 pub struct ListArtifactsInput {
-    pub produced_by: Option<String>,
+    pub by: Option<String>,
     pub ref_where: Option<String>,
     pub ref_what: Option<String>,
     pub ref_ref: Option<String>,
@@ -113,7 +113,7 @@ pub struct SummaryOutput {
 }
 
 // Tool implementations
-pub async fn bb_identify(
+pub async fn identify(
     identity: Arc<Mutex<IdentityResolver>>,
     input: IdentifyInput,
 ) -> BBResult<IdentifyOutput> {
@@ -126,7 +126,7 @@ pub async fn bb_identify(
     })
 }
 
-pub async fn bb_set_status(
+pub async fn set_status(
     identity: Arc<Mutex<IdentityResolver>>,
     project_dir: &Path,
     input: SetStatusInput,
@@ -156,7 +156,7 @@ pub async fn bb_set_status(
     Ok(agent)
 }
 
-pub async fn bb_get_status(
+pub async fn get_status(
     identity: Arc<Mutex<IdentityResolver>>,
     project_dir: &Path,
     input: GetStatusInput,
@@ -214,7 +214,7 @@ pub async fn bb_get_status(
     Ok(result)
 }
 
-pub async fn bb_post_message(
+pub async fn post_message(
     identity: Arc<Mutex<IdentityResolver>>,
     project_dir: &Path,
     input: PostMessageInput,
@@ -247,7 +247,7 @@ pub async fn bb_post_message(
                     &input.content,
                     tags,
                     priority,
-                    input.in_reply_to,
+                    input.reply_to,
                     refs,
                 )
             })
@@ -257,7 +257,7 @@ pub async fn bb_post_message(
     Ok(message)
 }
 
-pub async fn bb_read_messages(
+pub async fn read_messages(
     project_dir: &Path,
     input: ReadMessagesInput,
 ) -> BBResult<Vec<Message>> {
@@ -294,7 +294,7 @@ pub async fn bb_read_messages(
     Ok(messages)
 }
 
-pub async fn bb_register_artifact(
+pub async fn register_artifact(
     identity: Arc<Mutex<IdentityResolver>>,
     project_dir: &Path,
     input: RegisterArtifactInput,
@@ -331,7 +331,7 @@ pub async fn bb_register_artifact(
     Ok(artifact)
 }
 
-pub async fn bb_list_artifacts(
+pub async fn list_artifacts(
     project_dir: &Path,
     input: ListArtifactsInput,
 ) -> BBResult<Vec<Artifact>> {
@@ -343,7 +343,7 @@ pub async fn bb_list_artifacts(
             with_connection(&project_dir, |conn| {
                 artifact_ops::list_artifacts(
                     conn,
-                    input.produced_by.as_deref(),
+                    input.by.as_deref(),
                     input.ref_where.as_deref(),
                     input.ref_what.as_deref(),
                     input.ref_ref.as_deref(),
@@ -356,7 +356,7 @@ pub async fn bb_list_artifacts(
     Ok(artifacts)
 }
 
-pub async fn bb_find_refs(
+pub async fn find_refs(
     project_dir: &Path,
     input: FindRefsInput,
 ) -> BBResult<ReferenceResults> {
@@ -379,7 +379,7 @@ pub async fn bb_find_refs(
     Ok(results)
 }
 
-pub async fn bb_summary(
+pub async fn summary(
     project_dir: &Path,
 ) -> BBResult<SummaryOutput> {
     let result = tokio::task::spawn_blocking({

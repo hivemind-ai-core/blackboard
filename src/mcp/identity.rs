@@ -5,7 +5,7 @@ use crate::core::validation::limits::validate_agent_id;
 pub struct IdentityResolver {
     fixed_agent: Option<String>, // From --agent
     env_agent: Option<String>,   // From BB_AGENT_ID
-    resolved: Option<String>,    // From bb_identify
+    resolved: Option<String>,    // From identify call
 }
 
 impl IdentityResolver {

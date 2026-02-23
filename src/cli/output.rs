@@ -1,9 +1,9 @@
-use std::collections::HashMap;
-use serde::Serialize;
 use crate::core::models::agent::{Agent, Liveness};
-use crate::core::models::message::Message;
 use crate::core::models::artifact::Artifact;
+use crate::core::models::message::Message;
 use crate::core::operations::reference::ReferenceResults;
+use serde::Serialize;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy)]
 pub enum OutputFormat {
@@ -20,26 +20,37 @@ impl OutputFormatter {
         Self { format }
     }
 
-    pub fn format_agents(&self, agents: &[Agent], liveness_map: &HashMap<String, Liveness>) -> String {
+    pub fn format_agents(
+        &self,
+        agents: &[Agent],
+        liveness_map: &HashMap<String, Liveness>,
+    ) -> String {
         match self.format {
             OutputFormat::Human => self.format_agents_human(agents, liveness_map),
             OutputFormat::Json => self.format_agents_json(agents, liveness_map),
         }
     }
 
-    fn format_agents_human(&self, agents: &[Agent], liveness_map: &HashMap<String, Liveness>) -> String {
+    fn format_agents_human(
+        &self,
+        agents: &[Agent],
+        liveness_map: &HashMap<String, Liveness>,
+    ) -> String {
         if agents.is_empty() {
             return "No agents found.\n".to_string();
         }
 
-        let mut lines = vec![
-            format!("{:<20} {:<12} {:<8} {:<30} {:<20}", 
-                "AGENT", "STATUS", "PROG", "TASK", "LAST SEEN")
-        ];
+        let mut lines = vec![format!(
+            "{:<20} {:<12} {:<8} {:<30} {:<20}",
+            "AGENT", "STATUS", "PROG", "TASK", "LAST SEEN"
+        )];
         lines.push("-".repeat(100));
 
         for agent in agents {
-            let liveness = liveness_map.get(&agent.id).copied().unwrap_or(Liveness::Offline);
+            let liveness = liveness_map
+                .get(&agent.id)
+                .copied()
+                .unwrap_or(Liveness::Offline);
             let status_indicator = match liveness {
                 Liveness::Active => "",
                 Liveness::Stale => " [STALE]",
@@ -72,7 +83,11 @@ impl OutputFormatter {
         lines.join("\n") + "\n"
     }
 
-    fn format_agents_json(&self, agents: &[Agent], liveness_map: &HashMap<String, Liveness>) -> String {
+    fn format_agents_json(
+        &self,
+        agents: &[Agent],
+        liveness_map: &HashMap<String, Liveness>,
+    ) -> String {
         #[derive(Serialize)]
         struct AgentWithLiveness<'a> {
             #[serde(flatten)]
@@ -81,21 +96,29 @@ impl OutputFormatter {
             minutes_since_last_seen: i64,
         }
 
-        let agents_with_liveness: Vec<_> = agents.iter().map(|a| {
-            let liveness = liveness_map.get(&a.id).copied().unwrap_or(Liveness::Offline);
-            let liveness_str = match liveness {
-                Liveness::Active => "active",
-                Liveness::Stale => "stale",
-                Liveness::Offline => "offline",
-            };
-            let minutes = chrono::Utc::now().signed_duration_since(a.last_seen).num_minutes();
-            
-            AgentWithLiveness {
-                agent: a,
-                liveness: liveness_str,
-                minutes_since_last_seen: minutes,
-            }
-        }).collect();
+        let agents_with_liveness: Vec<_> = agents
+            .iter()
+            .map(|a| {
+                let liveness = liveness_map
+                    .get(&a.id)
+                    .copied()
+                    .unwrap_or(Liveness::Offline);
+                let liveness_str = match liveness {
+                    Liveness::Active => "active",
+                    Liveness::Stale => "stale",
+                    Liveness::Offline => "offline",
+                };
+                let minutes = chrono::Utc::now()
+                    .signed_duration_since(a.last_seen)
+                    .num_minutes();
+
+                AgentWithLiveness {
+                    agent: a,
+                    liveness: liveness_str,
+                    minutes_since_last_seen: minutes,
+                }
+            })
+            .collect();
 
         serde_json::to_string_pretty(&agents_with_liveness).unwrap_or_else(|_| "[]".to_string())
     }
@@ -103,7 +126,9 @@ impl OutputFormatter {
     pub fn format_messages(&self, messages: &[Message]) -> String {
         match self.format {
             OutputFormat::Human => self.format_messages_human(messages),
-            OutputFormat::Json => serde_json::to_string_pretty(messages).unwrap_or_else(|_| "[]".to_string()),
+            OutputFormat::Json => {
+                serde_json::to_string_pretty(messages).unwrap_or_else(|_| "[]".to_string())
+            }
         }
     }
 
@@ -140,7 +165,9 @@ impl OutputFormatter {
             }
 
             if !msg.refs.is_empty() {
-                let refs_str: Vec<_> = msg.refs.iter()
+                let refs_str: Vec<_> = msg
+                    .refs
+                    .iter()
                     .map(|r| format!("{}:{}:{}", r.where_, r.what, r.ref_))
                     .collect();
                 lines.push(format!("  → Refs: {}", refs_str.join(", ")));
@@ -159,7 +186,9 @@ impl OutputFormatter {
     pub fn format_artifacts(&self, artifacts: &[Artifact]) -> String {
         match self.format {
             OutputFormat::Human => self.format_artifacts_human(artifacts),
-            OutputFormat::Json => serde_json::to_string_pretty(artifacts).unwrap_or_else(|_| "[]".to_string()),
+            OutputFormat::Json => {
+                serde_json::to_string_pretty(artifacts).unwrap_or_else(|_| "[]".to_string())
+            }
         }
     }
 
@@ -168,14 +197,15 @@ impl OutputFormatter {
             return "No artifacts found.\n".to_string();
         }
 
-        let mut lines = vec![
-            format!("{:<40} {:<15} {:<30}", "PATH", "PRODUCED BY", "DESCRIPTION")
-        ];
+        let mut lines = vec![format!(
+            "{:<40} {:<15} {:<30}",
+            "PATH", "PRODUCED BY", "DESCRIPTION"
+        )];
         lines.push("-".repeat(90));
 
         for artifact in artifacts {
             let path = if artifact.path.len() > 37 {
-                format!("...{}", &artifact.path[artifact.path.len()-34..])
+                format!("...{}", &artifact.path[artifact.path.len() - 34..])
             } else {
                 artifact.path.clone()
             };
@@ -198,7 +228,9 @@ impl OutputFormatter {
             }
 
             if !artifact.refs.is_empty() {
-                let refs_str: Vec<_> = artifact.refs.iter()
+                let refs_str: Vec<_> = artifact
+                    .refs
+                    .iter()
                     .map(|r| format!("{}:{}:{}", r.where_, r.what, r.ref_))
                     .collect();
                 lines.push(format!("  → Refs: {}", refs_str.join(", ")));
@@ -211,12 +243,18 @@ impl OutputFormatter {
     pub fn format_summary(&self, summary: &SummaryData) -> String {
         match self.format {
             OutputFormat::Human => self.format_summary_human(summary),
-            OutputFormat::Json => serde_json::to_string_pretty(summary).unwrap_or_else(|_| "{}".to_string()),
+            OutputFormat::Json => {
+                serde_json::to_string_pretty(summary).unwrap_or_else(|_| "{}".to_string())
+            }
         }
     }
 
     fn format_summary_human(&self, summary: &SummaryData) -> String {
-        let mut lines = vec!["Blackboard Summary".to_string(), "=".repeat(40), String::new()];
+        let mut lines = vec![
+            "Blackboard Summary".to_string(),
+            "=".repeat(40),
+            String::new(),
+        ];
 
         // Active agents
         lines.push(format!("Active Agents: {}", summary.active_agents.len()));
@@ -230,7 +268,10 @@ impl OutputFormatter {
         lines.push(String::new());
 
         // Recent messages
-        lines.push(format!("Recent Messages (last 30 min): {}", summary.recent_messages.len()));
+        lines.push(format!(
+            "Recent Messages (last 30 min): {}",
+            summary.recent_messages.len()
+        ));
         for msg in summary.recent_messages.iter().take(5) {
             let preview = if msg.content.len() > 50 {
                 format!("{}...", &msg.content[..50])
@@ -240,22 +281,39 @@ impl OutputFormatter {
             lines.push(format!("  #{} {}: {}", msg.id, msg.from_agent, preview));
         }
         if summary.recent_messages.len() > 5 {
-            lines.push(format!("  ... and {} more", summary.recent_messages.len() - 5));
+            lines.push(format!(
+                "  ... and {} more",
+                summary.recent_messages.len() - 5
+            ));
         }
         lines.push(String::new());
 
         // High priority messages
         if !summary.high_priority_messages.is_empty() {
-            lines.push(format!("⚠ High Priority Messages: {}", summary.high_priority_messages.len()));
+            lines.push(format!(
+                "⚠ High Priority Messages: {}",
+                summary.high_priority_messages.len()
+            ));
             for msg in &summary.high_priority_messages {
-                lines.push(format!("  #{} {}: {}", msg.id, msg.from_agent, 
-                    if msg.content.len() > 40 { format!("{}...", &msg.content[..40]) } else { msg.content.clone() }));
+                lines.push(format!(
+                    "  #{} {}: {}",
+                    msg.id,
+                    msg.from_agent,
+                    if msg.content.len() > 40 {
+                        format!("{}...", &msg.content[..40])
+                    } else {
+                        msg.content.clone()
+                    }
+                ));
             }
             lines.push(String::new());
         }
 
         // Recent artifacts
-        lines.push(format!("Recent Artifacts (last hour): {}", summary.recent_artifacts.len()));
+        lines.push(format!(
+            "Recent Artifacts (last hour): {}",
+            summary.recent_artifacts.len()
+        ));
         for artifact in summary.recent_artifacts.iter().take(5) {
             lines.push(format!("  • {}", artifact.path));
         }
@@ -266,7 +324,9 @@ impl OutputFormatter {
     pub fn format_ref_results(&self, results: &ReferenceResults) -> String {
         match self.format {
             OutputFormat::Human => self.format_ref_results_human(results),
-            OutputFormat::Json => serde_json::to_string_pretty(results).unwrap_or_else(|_| "{}".to_string()),
+            OutputFormat::Json => {
+                serde_json::to_string_pretty(results).unwrap_or_else(|_| "{}".to_string())
+            }
         }
     }
 
@@ -275,8 +335,16 @@ impl OutputFormatter {
 
         lines.push(format!("Messages: {}", results.messages.len()));
         for msg in &results.messages {
-            lines.push(format!("  #{} {}: {}", msg.id, msg.from_agent,
-                if msg.content.len() > 50 { format!("{}...", &msg.content[..50]) } else { msg.content.clone() }));
+            lines.push(format!(
+                "  #{} {}: {}",
+                msg.id,
+                msg.from_agent,
+                if msg.content.len() > 50 {
+                    format!("{}...", &msg.content[..50])
+                } else {
+                    msg.content.clone()
+                }
+            ));
         }
 
         lines.push(String::new());
@@ -315,7 +383,7 @@ fn format_timestamp_human(dt: chrono::DateTime<chrono::Utc>) -> String {
 
 fn truncate(s: &str, max_len: usize) -> String {
     if s.len() > max_len {
-        format!("{}...", &s[..max_len-3])
+        format!("{}...", &s[..max_len - 3])
     } else {
         s.to_string()
     }
@@ -326,11 +394,10 @@ fn wrap_text(text: &str, width: usize) -> Vec<String> {
     let mut current_line = String::new();
 
     for word in text.split_whitespace() {
-        if current_line.len() + word.len() + 1 > width
-            && !current_line.is_empty() {
-                lines.push(current_line);
-                current_line = String::new();
-            }
+        if current_line.len() + word.len() + 1 > width && !current_line.is_empty() {
+            lines.push(current_line);
+            current_line = String::new();
+        }
         if !current_line.is_empty() {
             current_line.push(' ');
         }
@@ -351,15 +418,19 @@ fn wrap_text(text: &str, width: usize) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
-    
 
     #[test]
     fn test_format_timestamp_human() {
         let now = chrono::Utc::now();
         assert_eq!(format_timestamp_human(now), "just now");
-        assert_eq!(format_timestamp_human(now - chrono::Duration::minutes(5)), "5m ago");
-        assert_eq!(format_timestamp_human(now - chrono::Duration::hours(2)), "2h ago");
+        assert_eq!(
+            format_timestamp_human(now - chrono::Duration::minutes(5)),
+            "5m ago"
+        );
+        assert_eq!(
+            format_timestamp_human(now - chrono::Duration::hours(2)),
+            "2h ago"
+        );
     }
 
     #[test]
@@ -395,7 +466,12 @@ mod tests {
         liveness.insert("test-agent".to_string(), Liveness::Active);
 
         let output = formatter.format_agents(&agents, &liveness);
-        assert!(output.contains("\"id\":\"test-agent\"") || output.contains("\"id\": \"test-agent\""));
-        assert!(output.contains("\"liveness\":\"active\"") || output.contains("\"liveness\": \"active\""));
+        assert!(
+            output.contains("\"id\":\"test-agent\"") || output.contains("\"id\": \"test-agent\"")
+        );
+        assert!(
+            output.contains("\"liveness\":\"active\"")
+                || output.contains("\"liveness\": \"active\"")
+        );
     }
 }

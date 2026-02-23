@@ -31,8 +31,8 @@ async fn run(cli: Cli) -> core::errors::BBResult<()> {
             let project_dir = get_project_dir(cli.dir)?;
             cli::commands::init::run(&project_dir)
         }
-        Commands::Install { agent_type } => {
-            cli::commands::install::run(agent_type.as_deref())
+        Commands::Install { tool, global, local } => {
+            cli::commands::install::run(tool, global, local)
         }
         Commands::Destroy { confirm } => {
             let project_dir = get_project_dir(cli.dir)?;

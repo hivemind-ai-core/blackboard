@@ -25,85 +25,85 @@ impl BlackboardMcpServer {
 
     async fn handle_request(&self, method: &str, params: Option<serde_json::Value>) -> Result<serde_json::Value, BBError> {
         match method {
-            "bb_identify" => {
+            "identify" => {
                 let input: IdentifyInput = params
                     .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {e}"))))
                     .transpose()?
                     .ok_or_else(|| BBError::InvalidInput("Missing params".to_string()))?;
                 
-                bb_identify(self.identity.clone(), input).await
+                identify(self.identity.clone(), input).await
                     .map(|r| serde_json::to_value(r).unwrap())
             }
 
-            "bb_set_status" => {
+            "set_status" => {
                 let input: SetStatusInput = params
                     .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {e}"))))
                     .transpose()?
                     .ok_or_else(|| BBError::InvalidInput("Missing params".to_string()))?;
                 
-                bb_set_status(self.identity.clone(), &self.project_dir, input).await
+                set_status(self.identity.clone(), &self.project_dir, input).await
                     .map(|r| serde_json::to_value(r).unwrap())
             }
 
-            "bb_get_status" => {
+            "get_status" => {
                 let input: GetStatusInput = params
                     .map(|v| serde_json::from_value(v).unwrap_or_default())
                     .unwrap_or_default();
                 
-                bb_get_status(self.identity.clone(), &self.project_dir, input).await
+                get_status(self.identity.clone(), &self.project_dir, input).await
                     .map(|r| serde_json::to_value(r).unwrap())
             }
 
-            "bb_post_message" => {
+            "post_message" => {
                 let input: PostMessageInput = params
                     .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {e}"))))
                     .transpose()?
                     .ok_or_else(|| BBError::InvalidInput("Missing params".to_string()))?;
                 
-                bb_post_message(self.identity.clone(), &self.project_dir, input).await
+                post_message(self.identity.clone(), &self.project_dir, input).await
                     .map(|r| serde_json::to_value(r).unwrap())
             }
 
-            "bb_read_messages" => {
+            "read_messages" => {
                 let input: ReadMessagesInput = params
                     .map(|v| serde_json::from_value(v).unwrap_or_default())
                     .unwrap_or_default();
                 
-                bb_read_messages(&self.project_dir, input).await
+                read_messages(&self.project_dir, input).await
                     .map(|r| serde_json::to_value(r).unwrap())
             }
 
-            "bb_register_artifact" => {
+            "register_artifact" => {
                 let input: RegisterArtifactInput = params
                     .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {e}"))))
                     .transpose()?
                     .ok_or_else(|| BBError::InvalidInput("Missing params".to_string()))?;
                 
-                bb_register_artifact(self.identity.clone(), &self.project_dir, input).await
+                register_artifact(self.identity.clone(), &self.project_dir, input).await
                     .map(|r| serde_json::to_value(r).unwrap())
             }
 
-            "bb_list_artifacts" => {
+            "list_artifacts" => {
                 let input: ListArtifactsInput = params
                     .map(|v| serde_json::from_value(v).unwrap_or_default())
                     .unwrap_or_default();
                 
-                bb_list_artifacts(&self.project_dir, input).await
+                list_artifacts(&self.project_dir, input).await
                     .map(|r| serde_json::to_value(r).unwrap())
             }
 
-            "bb_find_refs" => {
+            "find_refs" => {
                 let input: FindRefsInput = params
                     .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {e}"))))
                     .transpose()?
                     .ok_or_else(|| BBError::InvalidInput("Missing params".to_string()))?;
                 
-                bb_find_refs(&self.project_dir, input).await
+                find_refs(&self.project_dir, input).await
                     .map(|r| serde_json::to_value(r).unwrap())
             }
 
-            "bb_summary" => {
-                bb_summary(&self.project_dir).await
+            "summary" => {
+                summary(&self.project_dir).await
                     .map(|r| serde_json::to_value(r).unwrap())
             }
 
@@ -179,7 +179,7 @@ pub async fn run_mcp_server(
                         "tools": {}
                     },
                     "serverInfo": {
-                        "name": "blackboard",
+                        "name": "bb",
                         "version": "0.1.0"
                     }
                 },
@@ -196,15 +196,15 @@ pub async fn run_mcp_server(
                 "jsonrpc": "2.0",
                 "result": {
                     "tools": [
-                        { "name": "bb_identify", "description": "Establish agent identity", "inputSchema": { "type": "object", "properties": { "agent_id": { "type": "string" }}, "required": ["agent_id"]}},
-                        { "name": "bb_set_status", "description": "Update agent status", "inputSchema": { "type": "object", "properties": { "current_task": { "type": "string" }, "progress": { "type": "integer" }, "status": { "type": "string" }, "blockers": { "type": "string" }}}},
-                        { "name": "bb_get_status", "description": "Get agent status", "inputSchema": { "type": "object", "properties": { "agent_id": { "type": "string" }}}},
-                        { "name": "bb_post_message", "description": "Post a message", "inputSchema": { "type": "object", "properties": { "content": { "type": "string" }, "tags": { "type": "array" }, "priority": { "type": "string" }, "in_reply_to": { "type": "integer" }, "refs": { "type": "array" }}, "required": ["content"]}},
-                        { "name": "bb_read_messages", "description": "Read messages", "inputSchema": { "type": "object", "properties": { "since": { "type": "string" }, "tags": { "type": "array" }, "from_agent": { "type": "string" }, "priority": { "type": "string" }, "limit": { "type": "integer" }}}},
-                        { "name": "bb_register_artifact", "description": "Register artifact", "inputSchema": { "type": "object", "properties": { "path": { "type": "string" }, "description": { "type": "string" }, "version": { "type": "string" }, "refs": { "type": "array" }}, "required": ["path", "description"]}},
-                        { "name": "bb_list_artifacts", "description": "List artifacts", "inputSchema": { "type": "object", "properties": { "produced_by": { "type": "string" }, "limit": { "type": "integer" }}}},
-                        { "name": "bb_find_refs", "description": "Find references", "inputSchema": { "type": "object", "properties": { "where": { "type": "string" }, "what": { "type": "string" }, "ref": { "type": "string" }}, "required": ["where", "what", "ref"]}},
-                        { "name": "bb_summary", "description": "Get summary", "inputSchema": { "type": "object", "properties": {}}}
+                        { "name": "identify", "description": "Establish agent identity", "inputSchema": { "type": "object", "properties": { "agent_id": { "type": "string" }}, "required": ["agent_id"]}},
+                        { "name": "set_status", "description": "Update agent status", "inputSchema": { "type": "object", "properties": { "current_task": { "type": "string" }, "progress": { "type": "integer" }, "status": { "type": "string" }, "blockers": { "type": "string" }}}},
+                        { "name": "get_status", "description": "Get agent status", "inputSchema": { "type": "object", "properties": { "agent_id": { "type": "string" }}}},
+                        { "name": "post_message", "description": "Post a message", "inputSchema": { "type": "object", "properties": { "content": { "type": "string" }, "tags": { "type": "array" }, "priority": { "type": "string" }, "reply_to": { "type": "integer" }, "refs": { "type": "array" }}, "required": ["content"]}},
+                        { "name": "read_messages", "description": "Read messages", "inputSchema": { "type": "object", "properties": { "since": { "type": "string" }, "tags": { "type": "array" }, "from_agent": { "type": "string" }, "priority": { "type": "string" }, "limit": { "type": "integer" }}}},
+                        { "name": "register_artifact", "description": "Register artifact", "inputSchema": { "type": "object", "properties": { "path": { "type": "string" }, "description": { "type": "string" }, "version": { "type": "string" }, "refs": { "type": "array" }}, "required": ["path", "description"]}},
+                        { "name": "list_artifacts", "description": "List artifacts", "inputSchema": { "type": "object", "properties": { "by": { "type": "string" }, "limit": { "type": "integer" }}}},
+                        { "name": "find_refs", "description": "Find references", "inputSchema": { "type": "object", "properties": { "where": { "type": "string" }, "what": { "type": "string" }, "ref": { "type": "string" }}, "required": ["where", "what", "ref"]}},
+                        { "name": "summary", "description": "Get summary", "inputSchema": { "type": "object", "properties": {}}}
                     ]
                 },
                 "id": id
@@ -254,7 +254,7 @@ pub async fn run_mcp_server(
                 Err(e) => {
                     let (code, message) = match e {
                         BBError::NotInitialized => (-32001, "No blackboard found. Run 'bb init' to create one.".to_string()),
-                        BBError::IdentityRequired => (-32002, "Identity required. Configure --agent, set BB_AGENT_ID, or call bb_identify.".to_string()),
+                        BBError::IdentityRequired => (-32002, "Identity required. Configure --agent, set BB_AGENT_ID, or call identify.".to_string()),
                         BBError::InvalidInput(msg) => (-32003, msg),
                         BBError::NotFound(msg) => (-32004, msg),
                         BBError::InvalidRefFormat(msg) => (-32005, msg),

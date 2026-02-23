@@ -1,12 +1,12 @@
 pub mod commands;
 pub mod output;
 
-use std::path::PathBuf;
-use clap::{Parser, Subcommand};
 use crate::core::errors::BBResult;
 use crate::core::models::agent::AgentStatus;
 use crate::core::models::message::Priority;
 use crate::util::discovery::find_blackboard_dir;
+use clap::{Parser, Subcommand};
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(name = "bb")]
@@ -40,8 +40,17 @@ pub enum Commands {
 
     /// Print MCP installation instructions
     Install {
-        /// Agent type (claude, kimi, kilo)
-        agent_type: Option<String>,
+        /// Agent tool (claude, kimi, kilo)
+        #[arg(long = "tool")]
+        tool: Option<String>,
+
+        /// Install for global configuration
+        #[arg(long)]
+        global: bool,
+
+        /// Install for local project configuration
+        #[arg(long)]
+        local: bool,
     },
 
     /// Remove the blackboard (use with caution)
@@ -229,6 +238,24 @@ pub enum StatusCommands {
 
     /// Clear your status
     Clear,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum InstallTool {
+    Claude,
+    Kimi,
+    Kilo,
+}
+
+impl InstallTool {
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s.to_lowercase().as_str() {
+            "claude" => Some(Self::Claude),
+            "kimi" => Some(Self::Kimi),
+            "kilo" => Some(Self::Kilo),
+            _ => None,
+        }
+    }
 }
 
 pub fn get_project_dir(dir_arg: Option<PathBuf>) -> BBResult<PathBuf> {
