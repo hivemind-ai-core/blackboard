@@ -26,10 +26,10 @@ pub fn post_message(
     }
 
     // Verify in_reply_to exists if provided
-    if let Some(reply_to) = in_reply_to {
-        if message_queries::get_message(conn, reply_to)?.is_none() {
-            return Err(BBError::NotFound(format!("message {reply_to} not found")));
-        }
+    if let Some(reply_to) = in_reply_to
+        && message_queries::get_message(conn, reply_to)?.is_none()
+    {
+        return Err(BBError::NotFound(format!("message {reply_to} not found")));
     }
 
     let message = Message {

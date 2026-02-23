@@ -248,7 +248,7 @@ pub enum InstallTool {
 }
 
 impl InstallTool {
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn parse(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
             "claude" => Some(Self::Claude),
             "kimi" => Some(Self::Kimi),

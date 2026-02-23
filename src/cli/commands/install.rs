@@ -28,7 +28,7 @@ pub fn run(tool: Option<String>, global: bool, local: bool) -> BBResult<()> {
     println!("Blackboard MCP Installation");
     println!("==========================\n");
 
-    let agent_types: Vec<&str> = match tool.as_ref().and_then(|t| InstallTool::from_str(t)) {
+    let agent_types: Vec<&str> = match tool.as_ref().and_then(|t| InstallTool::parse(t)) {
         Some(InstallTool::Claude) => vec!["claude"],
         Some(InstallTool::Kimi) => vec!["kimi"],
         Some(InstallTool::Kilo) => vec!["kilo"],
@@ -63,7 +63,7 @@ fn install_claude(exe_path: &str, global: bool, local: bool) -> BBResult<()> {
         install_to_config(&config_path, exe_path, "claude-01", true)?;
     }
 
-    if local || (!global && !local) {
+    if local || !global {
         let config_path = PathBuf::from(".mcp.json");
         install_to_config(&config_path, exe_path, "claude-01", true)?;
         add_to_gitignore(".mcp.json")?;
@@ -86,7 +86,7 @@ fn install_kimi(exe_path: &str, global: bool, local: bool) -> BBResult<()> {
         install_to_config(&config_path, exe_path, "kimi-01", false)?;
     }
 
-    if local || (!global && !local) {
+    if local || !global {
         let config_path = PathBuf::from(".mcp.json");
         install_to_config(&config_path, exe_path, "kimi-01", false)?;
         add_to_gitignore(".mcp.json")?;
@@ -112,7 +112,7 @@ fn install_kilo(exe_path: &str, global: bool, local: bool) -> BBResult<()> {
         install_to_config(&config_path, exe_path, "kilo-01", true)?;
     }
 
-    if local || (!global && !local) {
+    if local || !global {
         let config_path = PathBuf::from(".kilocode").join("mcp.json");
         install_to_config(&config_path, exe_path, "kilo-01", true)?;
         add_to_gitignore(".kilocode/mcp.json")?;
@@ -132,9 +132,9 @@ fn add_to_gitignore(entry: &str) -> BBResult<()> {
             }
         }
         let mut new_content = content;
-        new_content.push_str("\n");
+        new_content.push('\n');
         new_content.push_str(entry);
-        new_content.push_str("\n");
+        new_content.push('\n');
         fs::write(&gitignore_path, new_content)?;
     } else {
         fs::write(&gitignore_path, format!("{}\n", entry))?;
