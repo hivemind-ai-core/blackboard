@@ -1,7 +1,7 @@
+use serde_json::json;
 use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use serde_json::json;
 
 use crate::core::errors::BBError;
 use crate::mcp::identity::IdentityResolver;
@@ -23,25 +23,37 @@ impl BlackboardMcpServer {
         }
     }
 
-    async fn handle_request(&self, method: &str, params: Option<serde_json::Value>) -> Result<serde_json::Value, BBError> {
+    async fn handle_request(
+        &self,
+        method: &str,
+        params: Option<serde_json::Value>,
+    ) -> Result<serde_json::Value, BBError> {
         match method {
             "identify" => {
                 let input: IdentifyInput = params
-                    .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {e}"))))
+                    .map(|v| {
+                        serde_json::from_value(v)
+                            .map_err(|e| BBError::InvalidInput(format!("Parse error: {e}")))
+                    })
                     .transpose()?
                     .ok_or_else(|| BBError::InvalidInput("Missing params".to_string()))?;
-                
-                identify(self.identity.clone(), input).await
+
+                identify(self.identity.clone(), input)
+                    .await
                     .map(|r| serde_json::to_value(r).unwrap())
             }
 
             "set_status" => {
                 let input: SetStatusInput = params
-                    .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {e}"))))
+                    .map(|v| {
+                        serde_json::from_value(v)
+                            .map_err(|e| BBError::InvalidInput(format!("Parse error: {e}")))
+                    })
                     .transpose()?
                     .ok_or_else(|| BBError::InvalidInput("Missing params".to_string()))?;
-                
-                set_status(self.identity.clone(), &self.project_dir, input).await
+
+                set_status(self.identity.clone(), &self.project_dir, input)
+                    .await
                     .map(|r| serde_json::to_value(r).unwrap())
             }
 
@@ -49,18 +61,23 @@ impl BlackboardMcpServer {
                 let input: GetStatusInput = params
                     .map(|v| serde_json::from_value(v).unwrap_or_default())
                     .unwrap_or_default();
-                
-                get_status(self.identity.clone(), &self.project_dir, input).await
+
+                get_status(self.identity.clone(), &self.project_dir, input)
+                    .await
                     .map(|r| serde_json::to_value(r).unwrap())
             }
 
             "post_message" => {
                 let input: PostMessageInput = params
-                    .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {e}"))))
+                    .map(|v| {
+                        serde_json::from_value(v)
+                            .map_err(|e| BBError::InvalidInput(format!("Parse error: {e}")))
+                    })
                     .transpose()?
                     .ok_or_else(|| BBError::InvalidInput("Missing params".to_string()))?;
-                
-                post_message(self.identity.clone(), &self.project_dir, input).await
+
+                post_message(self.identity.clone(), &self.project_dir, input)
+                    .await
                     .map(|r| serde_json::to_value(r).unwrap())
             }
 
@@ -68,18 +85,23 @@ impl BlackboardMcpServer {
                 let input: ReadMessagesInput = params
                     .map(|v| serde_json::from_value(v).unwrap_or_default())
                     .unwrap_or_default();
-                
-                read_messages(&self.project_dir, input).await
+
+                read_messages(&self.project_dir, input)
+                    .await
                     .map(|r| serde_json::to_value(r).unwrap())
             }
 
             "register_artifact" => {
                 let input: RegisterArtifactInput = params
-                    .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {e}"))))
+                    .map(|v| {
+                        serde_json::from_value(v)
+                            .map_err(|e| BBError::InvalidInput(format!("Parse error: {e}")))
+                    })
                     .transpose()?
                     .ok_or_else(|| BBError::InvalidInput("Missing params".to_string()))?;
-                
-                register_artifact(self.identity.clone(), &self.project_dir, input).await
+
+                register_artifact(self.identity.clone(), &self.project_dir, input)
+                    .await
                     .map(|r| serde_json::to_value(r).unwrap())
             }
 
@@ -87,25 +109,29 @@ impl BlackboardMcpServer {
                 let input: ListArtifactsInput = params
                     .map(|v| serde_json::from_value(v).unwrap_or_default())
                     .unwrap_or_default();
-                
-                list_artifacts(&self.project_dir, input).await
+
+                list_artifacts(&self.project_dir, input)
+                    .await
                     .map(|r| serde_json::to_value(r).unwrap())
             }
 
             "find_refs" => {
                 let input: FindRefsInput = params
-                    .map(|v| serde_json::from_value(v).map_err(|e| BBError::InvalidInput(format!("Parse error: {e}"))))
+                    .map(|v| {
+                        serde_json::from_value(v)
+                            .map_err(|e| BBError::InvalidInput(format!("Parse error: {e}")))
+                    })
                     .transpose()?
                     .ok_or_else(|| BBError::InvalidInput("Missing params".to_string()))?;
-                
-                find_refs(&self.project_dir, input).await
+
+                find_refs(&self.project_dir, input)
+                    .await
                     .map(|r| serde_json::to_value(r).unwrap())
             }
 
-            "summary" => {
-                summary(&self.project_dir).await
-                    .map(|r| serde_json::to_value(r).unwrap())
-            }
+            "summary" => summary(&self.project_dir)
+                .await
+                .map(|r| serde_json::to_value(r).unwrap()),
 
             _ => Err(BBError::InvalidInput(format!("Unknown method: {method}"))),
         }
@@ -118,7 +144,7 @@ pub async fn run_mcp_server(
     project_dir: &Path,
 ) -> crate::core::errors::BBResult<()> {
     use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-    
+
     // Check if initialized - we'll handle NotInitialized errors as JSON-RPC responses
     let initialized = crate::util::discovery::is_initialized(project_dir);
 
@@ -134,19 +160,19 @@ pub async fn run_mcp_server(
         "none"
     };
     tracing::debug!("MCP server identity source: {}", identity_source);
-    
+
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
     let reader = BufReader::new(stdin);
     let mut lines = reader.lines();
     let mut stdout = stdout;
-    
+
     // MCP protocol over stdio: read JSON-RPC requests, write responses
     while let Ok(Some(line)) = lines.next_line().await {
         if line.trim().is_empty() {
             continue;
         }
-        
+
         // Parse request
         let request: serde_json::Value = match serde_json::from_str(&line) {
             Ok(v) => v,
@@ -164,11 +190,11 @@ pub async fn run_mcp_server(
                 continue;
             }
         };
-        
+
         let id = request.get("id").cloned();
         let method = request.get("method").and_then(|m| m.as_str()).unwrap_or("");
         let params = request.get("params").cloned();
-        
+
         // Handle initialize
         if method == "initialize" {
             let response = json!({
@@ -189,7 +215,7 @@ pub async fn run_mcp_server(
             let _ = stdout.flush().await;
             continue;
         }
-        
+
         // Handle tools/list
         if method == "tools/list" {
             let response = json!({
@@ -213,7 +239,7 @@ pub async fn run_mcp_server(
             let _ = stdout.flush().await;
             continue;
         }
-        
+
         // Handle tool calls
         if method == "tools/call" {
             // Check initialization first
@@ -230,17 +256,16 @@ pub async fn run_mcp_server(
                 let _ = stdout.flush().await;
                 continue;
             }
-            
-            let tool_name = params.as_ref()
+
+            let tool_name = params
+                .as_ref()
                 .and_then(|p| p.get("name"))
                 .and_then(|n| n.as_str())
                 .unwrap_or("");
-            let tool_params = params.as_ref()
-                .and_then(|p| p.get("arguments"))
-                .cloned();
-            
+            let tool_params = params.as_ref().and_then(|p| p.get("arguments")).cloned();
+
             let result = server.handle_request(tool_name, tool_params).await;
-            
+
             let response = match result {
                 Ok(content) => {
                     json!({
@@ -274,12 +299,12 @@ pub async fn run_mcp_server(
                     })
                 }
             };
-            
+
             let _ = stdout.write_all(format!("{response}\n").as_bytes()).await;
             let _ = stdout.flush().await;
             continue;
         }
-        
+
         // Unknown method
         let response = json!({
             "jsonrpc": "2.0",
@@ -292,8 +317,6 @@ pub async fn run_mcp_server(
         let _ = stdout.write_all(format!("{response}\n").as_bytes()).await;
         let _ = stdout.flush().await;
     }
-    
+
     Ok(())
 }
-
-

@@ -1,27 +1,27 @@
-use serde_json::Value as JsonValue;
 use crate::core::errors::{BBError, BBResult};
 use crate::core::models::reference::Reference;
+use serde_json::Value as JsonValue;
 
 pub fn parse_ref(s: &str) -> BBResult<Reference> {
     let parts: Vec<&str> = s.split(':').collect();
     if parts.len() != 3 {
         return Err(BBError::InvalidRefFormat(s.to_string()));
     }
-    
+
     let where_ = parts[0].trim();
     let what = parts[1].trim();
     let ref_str = parts[2].trim();
-    
+
     if where_.is_empty() || what.is_empty() || ref_str.is_empty() {
         return Err(BBError::InvalidRefFormat(s.to_string()));
     }
-    
+
     let ref_value = if ref_str.chars().all(|c| c.is_ascii_digit()) {
         JsonValue::Number(ref_str.parse::<i64>().unwrap().into())
     } else {
         JsonValue::String(ref_str.to_string())
     };
-    
+
     Ok(Reference {
         where_: where_.to_string(),
         what: what.to_string(),

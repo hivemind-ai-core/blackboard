@@ -2,7 +2,7 @@ use crate::core::errors::BBResult;
 use crate::core::models::artifact::Artifact;
 use crate::core::models::reference::Reference;
 use chrono::{DateTime, Utc};
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, params};
 use serde_json::Value as JsonValue;
 
 pub fn upsert_artifact(conn: &mut Connection, artifact: &Artifact) -> BBResult<i64> {

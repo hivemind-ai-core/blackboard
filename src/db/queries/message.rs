@@ -2,7 +2,7 @@ use crate::core::errors::BBResult;
 use crate::core::models::message::{Message, Priority};
 use crate::core::models::reference::Reference;
 use chrono::{DateTime, Utc};
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, params};
 use serde_json::Value as JsonValue;
 
 pub fn insert_message(conn: &mut Connection, message: &Message) -> BBResult<i64> {

@@ -1,27 +1,32 @@
-use chrono::Duration;
 use crate::core::errors::{BBError, BBResult};
+use chrono::Duration;
 
 pub fn parse_duration(s: &str) -> BBResult<Duration> {
     let s = s.trim();
     if s.is_empty() {
         return Err(BBError::InvalidInput("empty duration".to_string()));
     }
-    
-    let num_part = &s[..s.len()-1];
+
+    let num_part = &s[..s.len() - 1];
     let unit = s.chars().last().unwrap();
-    
-    let num: u64 = num_part.parse()
+
+    let num: u64 = num_part
+        .parse()
         .map_err(|_| BBError::InvalidInput(format!("invalid duration number: {num_part}")))?;
-    
+
     let seconds: i64 = match unit {
         's' => num as i64,
         'm' => num as i64 * 60,
         'h' => num as i64 * 3600,
         'd' => num as i64 * 86400,
         'w' => num as i64 * 604800,
-        _ => return Err(BBError::InvalidInput(format!("invalid duration unit: {unit} (expected s, m, h, d, w)"))),
+        _ => {
+            return Err(BBError::InvalidInput(format!(
+                "invalid duration unit: {unit} (expected s, m, h, d, w)"
+            )));
+        }
     };
-    
+
     Ok(Duration::seconds(seconds))
 }
 

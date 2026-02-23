@@ -10,7 +10,7 @@ where
     if !bb_dir.exists() {
         return Err(BBError::NotInitialized);
     }
-    
+
     let db_path = bb_dir.join("blackboard.db");
     let mut conn = Connection::open(&db_path)?;
 

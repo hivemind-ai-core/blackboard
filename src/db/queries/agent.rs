@@ -1,7 +1,7 @@
 use crate::core::errors::BBResult;
 use crate::core::models::agent::{Agent, AgentStatus};
 use chrono::{DateTime, Utc};
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, params};
 
 pub fn upsert_agent(conn: &mut Connection, agent: &Agent) -> BBResult<()> {
     conn.execute(

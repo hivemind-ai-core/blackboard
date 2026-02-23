@@ -1,5 +1,5 @@
 //! Reference validation wrapper
-//! 
+//!
 //! Provides a consistent interface for ref validation with BBResult error handling.
 
 use crate::core::errors::BBResult;
@@ -7,21 +7,21 @@ use crate::core::models::reference::Reference;
 use crate::util::ref_::parse_ref;
 
 /// Validates a reference string and returns a Reference object.
-/// 
+///
 /// This is a wrapper around `util::ref_::parse_ref` that provides
 /// consistent BBResult error handling for the validation module.
-/// 
+///
 /// # Arguments
 /// * `s` - The reference string in format "where:what:ref"
-/// 
+///
 /// # Returns
 /// * `Ok(Reference)` - The parsed reference
 /// * `Err(BBError::InvalidRefFormat)` - If the format is invalid
-/// 
+///
 /// # Examples
 /// ```
 /// use bb::core::validation::ref_::validate_ref;
-/// 
+///
 /// let reference = validate_ref("tt:task:13").unwrap();
 /// assert_eq!(reference.where_, "tt");
 /// assert_eq!(reference.what, "task");
@@ -72,7 +72,7 @@ mod tests {
         assert!(result.is_err());
         // Verify it returns InvalidRefFormat error
         match result {
-            Err(crate::core::errors::BBError::InvalidRefFormat(_)) => {},
+            Err(crate::core::errors::BBError::InvalidRefFormat(_)) => {}
             _ => panic!("Expected InvalidRefFormat error"),
         }
     }
