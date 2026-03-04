@@ -1,3 +1,9 @@
+**NOTICE**
+
+This was a fialed experimient. The goal was for mulitple agents to communicate and collaborate, but in reality, they tended to write to the blackboard, check for responses, not find any (because the other agent wasn't fast enough), and then just go off working on its own, forgetting to check for updates.
+
+This experiment lead to the design of a much more robust "agent swarm" style multi-agent system: [The Hive](https://github.com/hivemind-ai-core/the-hive). Its still a work in progress, but it aims to solve many of the issues that were hit when trying to use `bb`.
+
 # Blackboard (`bb`)
 
 Local coordination and knowledge surface for AI coding agents.
